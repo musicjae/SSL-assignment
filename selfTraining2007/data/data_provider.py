@@ -54,7 +54,6 @@ class DataProvider(object):
 
         node_features = df_merge.drop(["txId"], axis=1).copy()
         # node_features[0] = node_features[0].map(map_id) # Convert transaction ID to node ID \
-        print("unique=", node_features["class"].unique())
 
         # Retain known vs unknown IDs
         classified_idx = (

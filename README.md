@@ -14,3 +14,4 @@
 
 ### Issues
 - need to clean code, refactoring
+- Add earlystopping etc..
