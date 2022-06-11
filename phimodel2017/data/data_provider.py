@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+import torch_geometric.transforms as T
 
 class DataProvider(object):
     def __init__(self):
@@ -19,7 +19,7 @@ class DataProvider(object):
         self.df_edges = pd.read_csv(getenv("TXS_EDGE_LIST_NAME"))
         self.df_features = pd.read_csv(getenv("TXS_FEATURES_NAME"), header=None)
 
-    def get_dataset(self):
+    def get_dataset(self,mode="normal"):
 
         self.df_classes["class"] = self.df_classes["class"].map(
             {"unknown": 2, "1": 1, "2": 0}
@@ -82,12 +82,22 @@ class DataProvider(object):
         )
         valid_idx, test_idx = train_test_split(valid_test_idx, test_size=0.5)
 
-        data_train = Data(
-            x=node_features_t,
-            edge_index=edge_index,
-            edge_attr=weights,
-            y=torch.tensor(labels, dtype=torch.double),
-        )
+        if mode == "normal":
+            data_train = Data(
+                x=node_features_t,
+                edge_index=edge_index,
+                edge_attr=weights,
+                y=torch.tensor(labels, dtype=torch.double),
+            )
+
+        elif mode == "augment":
+            data_train = Data(
+                x=node_features_t,
+                edge_index=edge_index,
+                edge_attr=weights,
+                y=torch.tensor(labels, dtype=torch.double),
+                pre_transform=T.KNNGraph(k=6)
+            )
         # Add in the train and valid idx
         data_train.train_idx = train_idx
         data_train.valid_idx = valid_idx

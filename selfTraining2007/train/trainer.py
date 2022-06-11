@@ -108,10 +108,6 @@ class GnnTrainer(object):
                 pseudo_labels.append(0)
 
         self.data_train.unclassified_idx = pseudo_labels
-        # unclassified_idx = pd.DataFrame(self.data_train.unclassified_idx)
-        # unclassified_label = pd.DataFrame(pseudo_labels)
-        # result = pd.concat([unclassified_idx,unclassified_label],axis=1)
-        # result.columns=[['nodeId','label']]
 
         return self.data_train
 

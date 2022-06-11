@@ -2,7 +2,7 @@ import torch
 import pickle
 import wandb
 from os import getenv
-
+import pandas as pd
 
 class GnnTrainer(object):
     def __init__(self, model, MetricManager):
@@ -79,7 +79,9 @@ class GnnTrainer(object):
                 print(f"Complete to save {model_name}")
 
     # To predict labels
-    def predict(self, data=None, unclassified_only=True, threshold=0.5):
+    def make_pseudo_labels(self, data=None, model_path=None, unclassified_only=True, threshold=0.5):
+        self.model.eval()
+        self.model.load_state_dict(torch.load(model_path))
         # evaluate model:
         self.model.eval()
         if data is not None:
@@ -89,13 +91,25 @@ class GnnTrainer(object):
         out = out.reshape((self.data_train.x.shape[0]))
 
         if unclassified_only:
-            pred_scores = out.detach().cpu().numpy()[self.data_train.test_idx]
+            pred_scores = out.detach().cpu().numpy()[self.data_train.unclassified_idx]
+
         else:
             pred_scores = out.detach().cpu().numpy()
 
         pred_labels = pred_scores > threshold
+        print(pred_labels)
+        pseudo_labels = []
 
-        return {"pred_scores": pred_scores, "pred_labels": pred_labels}
+        for label in pred_labels:
+            if label == True:
+                pseudo_labels.append(1)
+
+            else:
+                pseudo_labels.append(0)
+
+        self.data_train.unclassified_idx = pseudo_labels
+
+        return self.data_train
 
     # To save metrics
     def save_metrics(self, save_name, path="./save/"):

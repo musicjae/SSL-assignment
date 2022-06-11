@@ -5,22 +5,33 @@ from os import getenv
 
 
 class GnnTrainer(object):
-    def __init__(self, model, MetricManager):
+    def __init__(self, model,aug_model, MetricManager):
         self.model = model
+        self.aug_model = aug_model
         self.metric_manager = MetricManager(modes=["train", "val"])
 
-    def train(self, data_train, optimizer, criterion, scheduler, args):
+    def train(self, data_train, optimizer, criterion, scheduler, args,aug_data_train):
 
         self.data_train = data_train
         for epoch in range(args["epochs"]):
             self.model.train()
+            self.aug_model.train()
             optimizer.zero_grad()
-            out = self.model(data_train)
 
+            out = self.model(data_train)
             out = out.reshape((data_train.x.shape[0]))
-            loss = criterion(
+
+            aug_out = self.aug_model(aug_data_train)
+            aug_out = aug_out.reshape((aug_data_train.x.shape[0]))
+
+            supervised_loss = criterion(
                 out[data_train.train_idx], data_train.y[data_train.train_idx]
             )
+
+            unsupervised_loss = torch.pow(torch.sub(out[data_train.train_idx], aug_out[data_train.train_idx]),2).mean()
+
+            weight = (epoch+1)*(0.5/args["epochs"])
+            loss = torch.add(input=supervised_loss,other=unsupervised_loss,alpha=weight)
 
             # train data
             target_labels = data_train.y.detach().cpu().numpy()[data_train.train_idx]
