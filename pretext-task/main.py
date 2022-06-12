@@ -25,19 +25,30 @@ init_wandb(args, model)
 
 gnn_trainer = GnnTrainer(model, auto_encoder, MetricManager)
 
-# Setup training settings
-optimizer = torch.optim.Adam(
-    model.parameters(), lr=args["lr"], weight_decay=args["weight_decay"]
-)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
-criterion = torch.nn.BCELoss()
+def main(mode="pretrain"):
+    if mode == "pretrain":
+    # Setup training settings
+        optimizer = torch.optim.Adam(
+            auto_encoder.parameters(), lr=args["lr"], weight_decay=args["weight_decay"]
+        )
+    else:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=args["lr"], weight_decay=args["weight_decay"]
+        )
 
-# Train
-#gnn_trainer.pretrain_unlabel(data_set, optimizer, criterion, scheduler, args)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
+    criterion = torch.nn.BCELoss()
 
-pretrained_model_path = getenv("SAVE_RESULT_PATH")+"pretrained.pt"
-gnn_trainer.train(data_set, optimizer, criterion, scheduler, args,model_path=pretrained_model_path)
+    # Train
+    if mode == "pretrain":
+        gnn_trainer.pretrain_unlabel(data_set, optimizer, criterion, scheduler, args)
+    else:
+        pretrained_model_path = getenv("SAVE_RESULT_PATH")+"pretrained.pt"
+        gnn_trainer.train(data_set, optimizer, criterion, scheduler, args,model_path=pretrained_model_path)
 
-gnn_trainer.test(
-    model_path=getenv("SAVE_RESULT_PATH") + "normal_gcn.pt", graph_data=data_set
-)
+        gnn_trainer.test(
+            model_path=getenv("SAVE_RESULT_PATH") + "normal_gcn.pt", graph_data=data_set
+        )
+
+if __name__ == "__main__":
+    main(mode="asdf")

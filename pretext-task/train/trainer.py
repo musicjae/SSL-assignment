@@ -97,7 +97,7 @@ class GnnTrainer(object):
             x_u = torch.flatten(x[data_train.unclassified_idx])
             x_hat_u = torch.flatten(x_hat[data_train.unclassified_idx])
 
-            loss=self.cosine_similarity(x_u,x_hat_u)
+            loss=self.euclidean_distance(x_u,x_hat_u)
 
             ## Training Step
             loss.backward()
@@ -123,6 +123,9 @@ class GnnTrainer(object):
         eps = float(1e-6)
         result = abs(nume/ max(deno,eps))
         return result
+
+    def euclidean_distance(self,x1,x2):
+        return torch.mean(torch.abs(torch.sub(x1,x2)))
 
     def test(self, model_path, graph_data):
         self.model.eval()
